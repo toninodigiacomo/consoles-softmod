@@ -1,6 +1,7 @@
 # PS5 Hack: Architecture and components
 ## ⚒️ ps-hack
-Local host for console web exploits, hosted on a Raspberry Pi 5, Docker ```192.168.1.2```. Accessible only from the LAN. **First target:** PS5 running firmware 13.20 with the Relapse exploit.
+Local host for console web exploits, hosted on a Raspberry Pi 5, Docker ```192.168.1.2```. Accessible only from the LAN.  
+**First target** PS5 running firmware 13.20 with the Relapse exploit.
 > [!CAUTION]
 > **WARNING:** Never update PS5. Firmware 14.00 patches the vulnerability exploited by Relapse, and there is no way to downgrade.
 
