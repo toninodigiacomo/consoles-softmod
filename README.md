@@ -24,7 +24,7 @@ Essential tools used across multiple platforms:
 ---
 
 ## ⚠️ Important Safety Reminders
-1. **Always Dump Your NAND/NOR/Flash** before any major modification.
+1. **Always Dump NAND/NOR/Flash** before any major modification.
 2. **Verify MD5 Hashes** of every system firmware (PUP, BIN, etc.).
 3. **Avoid System Updates (OFW)** unless the guide explicitly states it's safe.
 4. **Thermal Watch:** Keep an eye on temperatures post-modding.
