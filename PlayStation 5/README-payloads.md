@@ -1,4 +1,4 @@
-# 8230-ps-hack — Chaîne de payloads PS5
+# ps-hack — Chaîne de payloads PS5
 
 This document covers **what happens after the exploit**: which payloads are loaded onto the PS5, in what order, by whom, and how to maintain them.
 The exploit’s hosting setup (Docker, nginx, NPM, DNS) is described in the main [`README.md`](README.md).
