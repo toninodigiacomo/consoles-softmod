@@ -209,7 +209,7 @@ This fork sends the payloads to ```localhost:9021``` itself via the ROP chain, w
 
 ---
 
-## 🚀 Réglages de la PS5
+## 🚀 PS5 configuration
 - **Firmware** 13.20
 - Automatic updates disabled (Settings → System → System Software).
 - **Network** Manual DNS, primary ```192.168.1.2```. Without this, the console may receive the DNS from the router (especially over IPv6) and bypass AdGuard.
