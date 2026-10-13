@@ -1,136 +1,110 @@
 # 8230-ps-hack — Chaîne de payloads PS5
 
-Ce document couvre **ce qui se passe après l'exploit** : quels payloads sont chargés sur la PS5, dans quel ordre, par qui, et comment les maintenir.
-L'hébergement de l'exploit (Docker, nginx, NPM, DNS) est décrit dans le [`README.md`](README.md) principal.
+This document covers **what happens after the exploit**: which payloads are loaded onto the PS5, in what order, by whom, and how to maintain them.
+The exploit’s hosting setup (Docker, nginx, NPM, DNS) is described in the main [`README.md`](README.md).
 
-> Console : PS5 en firmware **13.20**, IP fixe **192.168.1.80**.
-> ⚠️ Ne jamais mettre à jour la console (le 14.00 corrige la faille).
-
----
-
-## Sommaire
-
-1. [Architecture](#architecture)
-2. [Inventaire des fichiers](#inventaire-des-fichiers)
-3. [Configuration côté conteneur](#configuration-côté-conteneur)
-4. [Configuration côté console](#configuration-côté-console)
-5. [Procédure de reconstruction complète](#procédure-de-reconstruction-complète)
-6. [Utilisation quotidienne](#utilisation-quotidienne)
-7. [Jeux sur SSD externe](#jeux-sur-ssd-externe)
-8. [Vérifications](#vérifications)
-9. [Dépannage](#dépannage)
-10. [etaHEN : statut](#etahen--statut)
-11. [Sécurité](#sécurité)
-12. [Maintenance](#maintenance)
+> Console: PS5 running firmware **13.20**, static IP **192.168.1.80**.
+> ⚠️ Never update the console (version 14.00 patches the vulnerability).
 
 ---
 
-## Architecture
+## 🏛️ Architecture
 
 ```
 Guide utilisateur PS5
  │
  ▼
-Relapse (fork fs0ciety404/ps5-relapse, couche exploit uniquement)
- │  kexp.js : exploit noyau (kexp_2026_05_25.bin)
- │          + chargeur d'ELF (elfldr-ps5-1360.elf) sur le port 9021
- │  site.js : AUTO_PAYLOADS → envoie Payload Manager à localhost:9021
+Relapse (fork fs0ciety404/ps5-relapse, exploit layer only)
+ │  kexp.js : kernel exploit (kexp_2026_05_25.bin)
+ │          + ELF loader (elfldr-ps5-1360.elf) on port 9021
+ │  site.js: AUTO_PAYLOADS → sends Payload Manager to localhost:9021
  ▼
 Payload Manager (pldmgr)
- │  chargement automatique, dans cet ordre, avec délais :
- ├─ 1. kstuff-lite      → patchs noyau (requis par ShadowMountPlus)
- ├─ 2. ShadowMountPlus  → montage automatique des jeux et homebrews
- └─ 3. ftpsrv           → serveur FTP (port 2121)
+ │  Automatic loading, in this order, with 3 sec. delays:
+ ├─ 1. kstuff-lite      → kernel patches (required by ShadowMountPlus)
+ ├─ 2. ShadowMountPlus  → automatic mounting of games and homebrew
+ └─ 3. ftpsrv           → FTP server (port 2121)
 ```
 
-Principe : **le fork ne fait qu'une chose**, lancer l'exploit puis Payload Manager. Tout le reste (choix des payloads, ordre, délais) se gère dans Payload Manager, sur la console.
-
-etaHEN est **volontairement absent** de la chaîne : voir [etaHEN : statut](#etahen--statut).
+Principle: **The fork does just one thing**: launch the exploit and then the Payload Manager. Everything else (choice of payloads, order, timing) is managed in the Payload Manager, via the console or the web manager.  
+etaHEN is **deliberately absent** from the channel: see [etaHEN: status](#etahen--status).
 
 ---
 
-## Inventaire des fichiers
+## 🗒️ File inventory
+### On the router: `/mnt/nvme0n1/docker/ps-hack/src/ps5/payloads/`
 
-### Sur le routeur : `/mnt/nvme0n1/docker/ps-hack/src/ps5/payloads/`
-
-| Fichier | Rôle | Version | sha256 |
+| File | Role | Version | sha256 |
 |---|---|---|---|
-| `kexp_2026_05_25.bin` | Exploit noyau (chargé par `kexp.js`) | fournie par le fork | `7cfb3a8cb86db67893c360ae3531f460f800e9f24039797038e6e81fc50f18a9` |
-| `elfldr-ps5-1360.elf` | Chargeur d'ELF, port 9021 | fournie par le fork | `de5dd480d12637527ba2d75e35de851adbb59c455293fa32588c492ef6b44b81` |
-| `<pldmgr>.elf` | Payload Manager (envoyé par `site.js`) | _à compléter_ | _à compléter_ |
+| `kexp_2026_05_25.bin` | Kernel exploit (loaded by `kexp.js`) | provided by the fork | `7cfb3a8cb86db67893c360ae3531f460f800e9f24039797038e6e81fc50f18a9` |
+| `elfldr-ps5-1360.elf` | ELF loader, port 9021 | provided by the fork | `de5dd480d12637527ba2d75e35de851adbb59c455293fa32588c492ef6b44b81` |
+| `pldmgr_v0.5.2.elf` | Payload Manager (sent by `site.js`) | 0.5.2 | `62b3ba2a4937c2afc502f9a4e7242cca538610ebb4ae2800c7c6f72e7f268e7c` |
 
-Seuls ces trois fichiers doivent se trouver dans le dossier.
+Only these three files should be in the folder.
 
-### Dans Payload Manager (sur la console)
+### In Payload Manager (on the console)
 
-| Ordre | Payload | Source | Version | sha256 |
+| Order | Payload | Source | Version | sha256 |
 |---|---|---|---|---|
-| 1 | kstuff-lite | EchoStretch/kstuff-lite | _à compléter_ | _à compléter_ |
-| 2 | ShadowMountPlus | drakmor/ShadowMountPlus | _à compléter_ | _à compléter_ |
-| 3 | ftpsrv | ps5-payload-dev/ftpsrv | v0.21.1 | _à compléter_ |
+| 1 | kstuff | EchoStretch/kstuff-lite | 1.11 Beta | ab9a6cb4d3b1daf139d4d646e402b1cf569071acd64599c936d7a3a6164dc779 |
+| 2 | ShadowMountPlus | drakmor/ShadowMountPlus | 1.7beta5 | 0d54a8467ec3544e1c7b365c9f100b2bf42bf4633cb768bde7c8f16b6cfb5375 |
+| 3 | ftpsrv | ps5-payload-dev/ftpsrv | v0.21.1 | 7d4b31c83eae4e056580482a3a074e1db25922efc74ac1e439473b45d71a5938 |
 
-Calcul des empreintes sur le Mac : `shasum -a 256 *.elf`.
-
-> Garder une copie de chaque fichier retenu (par exemple dans `payloads-archive/` sur le routeur, hors du dossier servi) pour pouvoir revenir en arrière.
+Calculating hashes on a Mac: `shasum -a 256 *.elf`.
 
 ---
 
-## Configuration côté conteneur
+## 🔧 Container-side configuration
 
-`src/ps5/src/site.js`, ligne 51 :
+`src/ps5/src/site.js`, line 51 :
 
 ```js
-const AUTO_PAYLOADS = ["<pldmgr>.elf"];   // nom exact du fichier présent dans payloads/
+const AUTO_PAYLOADS = ["<pldmgr>.elf"];   // exact name of the file in payloads/
 ```
 
-`src/ps5/src/kexp.js` (ne pas modifier) :
+`src/ps5/src/kexp.js` (Do not change) :
 
 ```js
 const DEFAULT_KEXP = "kexp_2026_05_25.bin";
 const DEFAULT_ELFLDR = "elfldr-ps5-1360.elf";
 ```
 
-Points d'attention :
-
-- Le nom dans `AUTO_PAYLOADS` doit correspondre **exactement** au fichier dans `payloads/`. Un fichier manquant (404) interrompt le chargement.
-- Toutes les versions de Payload Manager ne passent pas forcément par l'envoi du fork. Une version testée et validée doit être conservée.
-- Pendant une reconstruction ou un diagnostic : `const AUTO_PAYLOADS = [];` (exploit seul).
-- Pas de redémarrage du conteneur nécessaire après modification (volume lu en direct). En revanche, le navigateur de la PS5 peut garder l'ancien `site.js` en cache : vérifier dans les logs ce qui est réellement demandé.
+Points to note:
+- The name in `AUTO_PAYLOADS` must match the file in `payloads/` **exactly**. A missing file (404) will interrupt the loading process.
+- Not all versions of Payload Manager necessarily involve sending the fork. A tested and validated version must be retained.
+- During a rebuild or diagnostic check: `const AUTO_PAYLOADS = [];` (exploit only).
+- No need to restart the container after making changes (volume read live). However, the PS5’s browser may still have the old `site.js` cached: check the logs to see what is actually being requested.
 
 ---
 
-## Configuration côté console
+## 🔧 Configuration côté console
 
-| Chemin | Contenu |
+| Path | Content |
 |---|---|
-| `/data/pldmgr/` | Configuration de Payload Manager (liste et ordre de chargement automatique) |
-| `/data/shadowmount/config.ini` | Configuration de ShadowMountPlus (créée au premier démarrage) |
-| `/data/shadowmount/debug.log` | Journal de ShadowMountPlus |
-| `/data/shadowmount/manual.lst` | Liste des images de jeux à monter (une par ligne) |
-| `/data/etaHEN.old/`, `/data/pldmgr.old/` | Anciennes configurations, conservées pendant la reconstruction |
+| `/data/pldmgr/` | Payload Manager configuration (list and order of automatic loading) |
+| `/data/shadowmount/config.ini` | ShadowMountPlus configuration (created on first start-up) |
+| `/data/shadowmount/debug.log` | ShadowMountPlus log |
+| `/data/shadowmount/manual.lst` | List of game images to mount (one per line) |
+| `/data/etaHEN.old/`, `/data/pldmgr.old/` | Old configurations, retained during reconstruction |
 
 ShadowMountPlus : réglages par défaut conservés, en particulier :
-
-- `api_bind_address=127.0.0.1` : l'API (port 10101) n'écoute qu'en local, **ne pas passer en `0.0.0.0`** ;
+- `api_bind_address=127.0.0.1`: the API (port 10101) only listens locally; **do not set this to `0.0.0.0`**;
 - `mount_read_only=1`.
 
 ---
 
-## Procédure de reconstruction complète
-
-À suivre si la chaîne ne fonctionne plus ou après un changement de version.
-**Redémarrage complet** = maintenir le bouton d'alimentation jusqu'à l'extinction, puis rallumer. Jamais le mode repos.
-
-### Phase 0 — Préparation (console éteinte)
-
-1. Archiver l'existant sur le routeur :
+## Full reset procedure
+To be followed if the channel is no longer working or after a version update.
+**Full restart** = hold down the power button until the device switches off, then switch it back on. Never use sleep mode.
+### Phase 0 — Preparation (console switched off)
+1. Back up the existing data on the router:
    ```sh
    cd /mnt/nvme0n1/docker/ps-hack/src
    tar czf ~/ps5-backup-$(date +%F).tar.gz ps5
    ```
-2. Télécharger chaque payload depuis son dépôt officiel, noter version et sha256.
-3. Dans `site.js` : `const AUTO_PAYLOADS = [];`
-4. Dans `payloads/`, ne garder que `kexp_2026_05_25.bin` et `elfldr-ps5-1360.elf`.
+2. Download each payload from its official repository; note the version and SHA256.
+3. In `site.js`: `const AUTO_PAYLOADS = [];`
+4. In `payloads/`, keep only `kexp_2026_05_25.bin` and `elfldr-ps5-1360.elf`.
 
 ### Phase 1 — Nettoyer la console
 
