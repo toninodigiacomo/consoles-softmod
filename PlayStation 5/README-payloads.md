@@ -77,7 +77,7 @@ Points to note:
 
 ---
 
-## 🔧 Configuration côté console
+## 🔧 Console-side configuration
 
 | Path | Content |
 |---|---|
@@ -93,205 +93,182 @@ ShadowMountPlus : réglages par défaut conservés, en particulier :
 
 ---
 
-## Full reset procedure
+## 🆘 Full reset procedure
 To be followed if the channel is no longer working or after a version update.
 **Full restart** = hold down the power button until the device switches off, then switch it back on. Never use sleep mode.
-### Phase 0 — Preparation (console switched off)
-1. Back up the existing data on the router:
+### Step 0 — Preparation (console switched off)
+1. Back up the existing data:
    ```sh
-   cd /mnt/nvme0n1/docker/ps-hack/src
+   cd ./ps-hack/src
    tar czf ~/ps5-backup-$(date +%F).tar.gz ps5
    ```
 2. Download each payload from its official repository; note the version and SHA256.
 3. In `site.js`: `const AUTO_PAYLOADS = [];`
 4. In `payloads/`, keep only `kexp_2026_05_25.bin` and `elfldr-ps5-1360.elf`.
 
-### Phase 1 — Nettoyer la console
+### Step 1 — Clean the console
+5. Jailbreak (User Guide Menu).
+6. Start ftpsrv: `nc -w 3 192.168.X.Y 9021 < ftpsrv-ps5.elf`
+7. Via FTP (port 2121), rename the following in `/data/`: `pldmgr` → `pldmgr.old`, `etaHEN` → `etaHEN.old`, and any autoloader folders → `.old`. Remove any autoloader icons from the home screen.
+8. 🔄 **Full restart.**
 
-5. Jailbreak (Guide utilisateur).
-6. Envoyer ftpsrv : `nc -w 3 192.168.1.80 9021 < ftpsrv-ps5.elf`
-7. Par FTP (port 2121), renommer dans `/data/` : `pldmgr` → `pldmgr.old`, `etaHEN` → `etaHEN.old`, et tout dossier d'autoloader → `.old`. Supprimer toute icône d'autoloader de l'écran d'accueil.
-8. 🔄 **Redémarrage complet.**
-
-### Phase 2 — Exploit seul
-
-9. Jailbreak. Aucune notification de payload ne doit apparaître.
+### Step 2 — Exploit only
+9. Jailbreak. No payload notification should appear.
 10. `nc -vz -G 2 192.168.1.80 9021` → **succeeded**.
-11. Envoyer ftpsrv, vérifier le FTP sur 2121 (accès de secours pour la suite).
+11. Start ftpsrv, check FTP on port 2121 (backup access for later).
 
-### Phase 3 — Payload Manager
-
+### Step 3 — Payload Manager
 12. `nc -w 3 192.168.1.80 9021 < <pldmgr>.elf`
-13. Trouver son port (notification ou `nmap -p- -T4 --open 192.168.1.80`), ouvrir son interface.
-14. Importer kstuff-lite, ShadowMountPlus et ftpsrv, **sans** activer le chargement automatique.
+13. Find the port (using the notification or `nmap -p- -T4 --open 192.168.X.Y`), then open the interface.
+14. Import kstuff-lite, ShadowMountPlus and ftpsrv, **without** enabling automatic loading.
 
-### Phase 4 — kstuff-lite
+### Step 4 — kstuff-lite
+15. Launch from Payload Manager, wait for the notification, then wait for about ten seconds.
 
-15. Lancer depuis Payload Manager, attendre la notification, puis une dizaine de secondes.
+### Step 5 — ShadowMountPlus
+16. Launch the app and wait for the ‘ShadowMount+’ notification.
+17. Via FTP: the `/data/shadowmount/` directory exists, containing `config.ini` and `debug.log`.
+  
+> If the process fails at stage 4 or 5: make a note of the message, 🔄 **full restart**, jailbreak, manually repeat the steps that were successful, then try again.
+> Never load the same payload twice in a single session.
 
-### Phase 5 — ShadowMountPlus
+### Step 6 — Reproducibility
+18. 🔄 **Full restart.**
+19. Repeat steps 2 to 5 manually. If everything works a second time, the sequence is reliable.
 
-16. Lancer, attendre la notification « ShadowMount+ ».
-17. Par FTP : `/data/shadowmount/` existe, avec `config.ini` et `debug.log`.
-
-> En cas d'échec en phase 4 ou 5 : noter le message, 🔄 **redémarrage complet**, jailbreak, refaire à la main les étapes réussies, puis retenter. Ne jamais charger deux fois le même payload dans une session.
-
-### Phase 6 — Reproductibilité
-
-18. 🔄 **Redémarrage complet.**
-19. Refaire les phases 2 à 5 à la main. Si tout passe une seconde fois, la séquence est fiable.
-
-### Phase 7 — Automatisation
-
-20. Dans Payload Manager, activer le chargement automatique : **kstuff-lite → ShadowMountPlus → ftpsrv**, avec quelques secondes entre chaque.
-21. Copier le pldmgr validé dans `payloads/` et le déclarer dans `site.js` :
+### Step 7 — Automation
+20. In Payload Manager, enable automatic loading: **kstuff-lite → ShadowMountPlus → ftpsrv**, with a few (3) seconds between each.
+21. Copy the validated pldmgr to `payloads/` and declare it in `site.js`:
     ```js
-    const AUTO_PAYLOADS = ["<pldmgr>.elf"];
+    const AUTO_PAYLOADS = [‘<pldmgr>.elf’];
     ```
-22. 🔄 **Redémarrage complet.**
-23. Jailbreak, ne plus toucher à la console jusqu'à la dernière notification, puis lancer les [vérifications](#vérifications).
+22. 🔄 **Full reboot.**
+23. Jailbreak; do not touch the console until the final notification appears, then run the [checks](#checks).
 
 ---
 
-## Utilisation quotidienne
-
-1. Allumer la PS5.
-2. **Paramètres → Guide de l'utilisateur, santé et sécurité → Guide de l'utilisateur.**
-3. Accepter le certificat, puis ne plus toucher à rien jusqu'à la dernière notification (ftpsrv).
-
-Le mode repos conserve généralement le jailbreak. Après un redémarrage complet, recommencer.
+## ✳️ Day-to-day use
+1. Switch on the PS5.
+2. **Settings → User Guide, Health and Safety → User Guide.**
+3. Accept the certificate, then do not touch anything until the final notification (ftpsrv) appears.
+  
+> **Rest mode usually preserves the jailbreak.**
+> After a full restart, repeat the process.
 
 ---
 
-## Jeux sur SSD externe
-
-### Format du SSD
-
-**exFAT** avec table de partition **MBR** (ne jamais utiliser « Formater comme stockage étendu USB » sur la console).
-
+## 🕹️ Games on an external SSD
+### SSD format
+**exFAT** with an **MBR** partition table (never use ‘Format as USB mass storage’ on the console).
 ```sh
 diskutil list external
-sudo diskutil eraseDisk ExFAT PS5 MBR diskN     # remplacer N
-sudo mdutil -i off /Volumes/PS5                 # pas d'indexation Spotlight
+sudo diskutil eraseDisk ExFAT PS5 MBR diskN     # replace N
+sudo mdutil -i off /Volumes/PS5                 # no Spotlight indexing
 ```
-
+  
 ### Format des jeux
-
 | Format | Statut ShadowMountPlus | Création sur Mac |
 |---|---|---|
-| `.ffpkg` (UFS) | Recommandé par l'auteur | Non (FreeBSD ou Windows UFS2Tool) |
-| `.exfat` | Supporté | **Oui**, script officiel |
-| `.ffpfs` / `.ffpfsc` | Expérimental | Oui (MkPFS) |
-
-Choix retenu : **`.exfat`**, créé avec le script macOS du dépôt ShadowMountPlus (clusters de 64 Kio) :
-
+| `.ffpkg` (UFS) | Recommended by the author | No (FreeBSD or Windows UFS2Tool) |
+| `.exfat` | Supported | **Yes**, official script |
+| `.ffpfs` / `.ffpfsc` | Experimental | Yes (MkPFS) |
+  
+Selected option: **`.exfat`**, created using the macOS script from the ShadowMountPlus repository (64 Kio clusters):
 ```sh
 chmod +x mkexfat_macos.sh
 ./mkexfat_macos.sh ./PPSAxxxxx-app ./PPSAxxxxx.exfat
 ```
-
-Le dossier source doit contenir `eboot.bin` et `sce_sys/param.json` **à sa racine**, sans dossier intermédiaire.
-
-### Déclaration et montage
-
-1. Copier `PPSAxxxxx.exfat` sur le SSD, éjecter proprement.
-2. Ajouter dans `/data/shadowmount/manual.lst` (via FTP) :
+  
+> The source directory **must contain** `eboot.bin` and `sce_sys/param.json` **at its root**, with no intermediate directories.
+  
+### Configuration and setup
+1. Copy `PPSAxxxxx.exfat` to the SSD, then eject it safely.
+2. Add the following to `/data/shadowmount/manual.lst` (via FTP):
    ```
    /mnt/usb0/PPSAxxxxx.exfat
    ```
-3. Brancher le SSD sur un port USB 10 Gbit/s (arrière ou USB-C avant), sans hub.
-4. Attendre la notification d'installation et l'icône sur l'écran d'accueil.
-
-Images uniquement sur le SSD externe : l'auteur de ShadowMountPlus signale des risques de corruption avec des images sur le stockage interne.
+3. Connect the SSD to a 10 Gbit/s USB port (rear or front USB-C), without using a hub.
+4. Wait for the installation notification and for the icon to appear on the home screen.
+  
+> ❗️Images on the external SSD only: the developer of ShadowMountPlus warns of a risk of corruption when images are stored on internal storage.
 
 ---
 
-## Vérifications
-
-Depuis le Mac :
-
+## Checks
+From the Mac:
 ```sh
-# Chargeur et FTP
-for p in 9021 2121; do nc -vz -G 2 192.168.1.80 $p; done
-
-# Tous les ports ouverts sur la console
+# Downloader and FTP
+for p in 9021 2121; do nc -vz -G 2 192.168.X.Y $p; done
+# All open ports on the console
 nmap -p- -T4 --open 192.168.1.80
-
-# Contenu de la console
-curl -s --list-only ftp://192.168.1.80:2121/data/
+# Console contents
+curl -s --list-only ftp://192.168.X.Y:2121/data/
 ```
-
-Par FTP : `/data/shadowmount/debug.log` ne doit pas contenir d'erreur au démarrage.
-
-Côté routeur, pendant un jailbreak :
-
+  
+Via FTP: `/data/shadowmount/debug.log` must not contain any errors on start-up.
+  
+On the router side, during a jailbreak:
 ```sh
-docker logs -f 8230-ps-hack 2>&1 | grep -E "site.js|kexp.js|payloads/"
+docker logs -f 8230-ps-hack 2>&1 | grep -E ‘site.js|kexp.js|payloads/’
 ```
-
-Chaque fichier de `payloads/` doit être servi en `200`.
+Each file in `payloads/` must be served with a `200` status code.
 
 ---
 
-## Dépannage
+## ⚠️ Troubleshooting
 
-| Symptôme | Cause | Correction |
+| Symptom | Cause | Solution |
 |---|---|---|
-| Le hack ne se charge plus après modification de `AUTO_PAYLOADS` | Fichier absent ou mal nommé (404), version de pldmgr incompatible avec l'envoi du fork, ou ancien `site.js` en cache | Vérifier les logs du conteneur ; revenir à `[]` ; reprendre le pldmgr validé |
-| `nc` sur Mac se termine sans rien dire | `nc` macOS ne signale pas les refus sans `-v` | Toujours tester avec `nc -vz` |
-| `nc: invalid option` sur le routeur | `nc` BusyBox minimal (ni `-w` ni `-v`) | `nc IP PORT < fichier` puis `Ctrl+C`, ou envoyer depuis le Mac, ou `opkg install netcat` |
-| FTP refusé sur 1337 | Port d'etaHEN, absent de la chaîne | Utiliser ftpsrv sur **2121** |
-| `/data/shadowmount/` absent | ShadowMountPlus jamais démarré (souvent : kstuff non chargé avant) | Vérifier l'ordre dans Payload Manager |
-| Un jeu n'apparaît pas | Image mal structurée, chemin incorrect dans `manual.lst`, copie en cours | Lire `/data/shadowmount/debug.log` |
-| Console instable après plusieurs envois | Payload chargé deux fois / état noyau incohérent | Redémarrage complet, rejouer la séquence une seule fois |
+| The hack no longer loads after modifying `AUTO_PAYLOADS` | File missing or incorrectly named (404), pldmgr version incompatible with the fork submission, or old `site.js` cached | Check the container logs; reset to `[]`; revert to the validated pldmgr |
+| `nc` on Mac exits without any message | macOS `nc` does not report rejections without `-v` | Always test with `nc -vz` |
+| `nc: invalid option` on the router | Minimal BusyBox `nc` (neither `-w` nor `-v`) | `nc IP PORT < file` then `Ctrl+C`, or send from the Mac, or `opkg install netcat` |
+| FTP refused on 1337 | etaHEN port, missing from the string | Use ftpsrv on **2121** |
+| `/data/shadowmount/` missing | ShadowMountPlus never started (often: kstuff not loaded beforehand) | Check the order in Payload Manager |
+| A game does not appear | Image structured incorrectly, incorrect path in `manual.lst`, copying in progress | Read `/data/shadowmount/debug.log` |
+| Console unstable after several transfers | Payload loaded twice / inconsistent kernel state | Full reboot, repeat the sequence just once |
 
-**Accès de secours** : si la chaîne automatique échoue, jailbreak puis `nc -w 3 192.168.1.80 9021 < ftpsrv-ps5.elf` depuis le Mac. ftpsrv fonctionne indépendamment de tout le reste.
+**Fallback method**: if the automatic chain fails, jailbreak the device and then run `nc -w 3 192.168.X.Y 9021 < ftpsrv-ps5.elf` from the Mac. ftpsrv runs independently of everything else.
 
 ---
 
-## etaHEN : statut
-
-**Non utilisé.** Testé sur la 13.20, etaHEN démarre (il détecte le firmware `0x1320` et active sa Toolbox), mais son superviseur boucle indéfiniment :
-
+## ⁉️ etaHEN : status
+**Not used.** Tested on 13.20: etaHEN starts up (it detects firmware `0x1320` and activates its Toolbox), but its supervisor loops indefinitely:
 ```
 runtime supervisor: launching embedded private elfldr via :9021
 runtime supervisor: loader recovery failed (1) … (16)
 ```
-
-Ses services dépendants (FTP 1337, ports 9027, 9081, 9090) ne démarrent jamais.
-Hypothèse non vérifiée : conflit avec le chargeur `elfldr-ps5-1360.elf` (nom indiquant une version 13.60) déjà présent sur le port 9021.
-
-Ce qu'etaHEN apporterait : Toolbox (réglages de débogage, cheats, ventilateur), « jailbreak à la demande » pour certains homebrews, installeur de paquets.
-Ce qui fonctionne sans lui : jeux via ShadowMountPlus, FTP via ftpsrv, la plupart des homebrews.
-
-À réévaluer : une version d'etaHEN annonçant la 13.20, ou **OnionHEN** (dérivé d'etaHEN, annoncé 4.03 à 13.60). À ajouter **en dernier** dans Payload Manager, après validation manuelle.
+Its dependent services (FTP 1337, ports 9027, 9081, 9090) never start.
+Unverified hypothesis: conflict with the `elfldr-ps5-1360.elf` loader (name indicating version 13.60) already present on port 9021.
+  
+What etaHEN would provide: Toolbox (debugging settings, cheats, fan control), ‘on-demand jailbreak’ for certain homebrews, package installer.
+What works without it: games via ShadowMountPlus, FTP via ftpsrv, most homebrews.
+   
+**To be reassessed:** a version of etaHEN announcing 13.20, or **OnionHEN** (a derivative of etaHEN, announced as supporting 4.03 to 13.60). To be added **last** in Payload Manager, after manual validation.
 
 ---
 
-## Sécurité
+## 👮‍♀️ Security
 
-Une fois jailbreakée, la console expose sur le LAN des services **sans authentification** :
+Once jailbroken, the console exposes services on the LAN **without authentication**:
 
-| Port | Service | Risque |
+| Port | Service | Risk |
 |---|---|---|
-| 9021 | Chargeur d'ELF | Exécution de code noyau par n'importe quel appareil du LAN |
-| 2121 | ftpsrv | Lecture/écriture de tout le système de fichiers |
-| _variable_ | Interface Payload Manager | Lancement de payloads |
-| 10101 | API ShadowMountPlus | Local uniquement (`127.0.0.1`), à conserver ainsi |
-
-Pistes : isoler la PS5 sur un VLAN dédié, ou filtrer ces ports au niveau du routeur pour ne les ouvrir qu'au Mac.
-
-Rappels :
-
-- Rester hors du PSN tant que la console est jailbreakée (déjà bloqué par AdGuard).
-- Payloads uniquement depuis les dépôts d'origine, relus avant usage, empreintes notées ci-dessus.
-- ShadowMountPlus : uniquement pour des sauvegardes de jeux possédés.
+| 9021 | ELF Loader | Execution of kernel code by any device on the LAN |
+| 2121 | ftpsrv | Read/write access to the entire file system |
+| _variable_ | Payload Manager interface | Launching payloads |
+| 10101 | ShadowMountPlus API | Local only (`127.0.0.1`), should be kept this way |
+  
+**Possible solutions:** isolate the PS5 on a dedicated VLAN, or filter these ports at router level so that they are only accessible from the Mac.
+  
+Reminders:
+- Stay off the PSN whilst the console is jailbroken (already blocked by AdGuard).
+- Payloads only from official repositories; check them before use; fingerprints listed above.
+- ShadowMountPlus: for save files of games you own only.
 
 ---
 
-## Maintenance
-
-- **Mettre à jour un payload** : télécharger la nouvelle version, la tester **à la main** (envoi par Payload Manager) avant de remplacer l'ancienne dans le chargement automatique ; mettre à jour le tableau [Inventaire](#inventaire-des-fichiers).
-- **Ajouter un payload** : toujours en fin de séquence, après validation manuelle.
-- **Mettre à jour le fork** : ne remplacer que `kexp.js`, `kexp_*.bin` et `elfldr-*.elf` si nécessaire, puis remettre `AUTO_PAYLOADS`.
-- **Nettoyage** : une fois la chaîne stable depuis un moment, supprimer `/data/etaHEN.old` et `/data/pldmgr.old` sur la console.
+## ☢️ Maintenance
+- **Updating a payload**: download the new version, test it **manually** (by sending it via Payload Manager) before replacing the old one in the automatic upload; update the [Inventory](#file-inventory) table.
+- **Add a payload**: always at the end of the sequence, after manual validation.
+- **Update the fork**: only replace `kexp.js`, `kexp_*.bin` and `elfldr-*.elf` if necessary, then reset `AUTO_PAYLOADS`.
+- **Clean-up**: once the chain has been stable for a while, delete `/data/etaHEN.old` and `/data/pldmgr.old` on the console.
