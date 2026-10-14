@@ -166,7 +166,7 @@ sudo diskutil eraseDisk ExFAT PS5 MBR diskN     # replace N
 sudo mdutil -i off /Volumes/PS5                 # no Spotlight indexing
 ```
   
-### Format des jeux
+### Games format
 | Format | Statut ShadowMountPlus | Création sur Mac |
 |---|---|---|
 | `.ffpkg` (UFS) | Recommended by the author | No (FreeBSD or Windows UFS2Tool) |
